@@ -118,6 +118,24 @@ enum StrandCountOption {
 class Tr {
   static const Map<AppLanguage, Map<String, String>> _s = {
     AppLanguage.uk: {
+      'wave_discard': 'Бракування при',
+      'wave_work': 'Робоча ділянка',
+      'wave_straight': 'Пряма ділянка',
+      'pdf_lay_spooling': 'Звивка / Намотування',
+      'pdf_duty_class': 'Режим роботи',
+      'pdf_group': 'Група',
+      'pdf_required': 'Вимоги ISO 16625',
+      'pdf_status': 'Статус',
+      'pdf_pass': 'Відповідає',
+      'pdf_fail': 'Не відповідає',
+      'unit_mm': 'мм',
+      'unit_kn': 'кН',
+      'unit_pcs': 'шт.',
+      'limit_min': 'мін.',
+      'limit_max': 'макс.',
+      'groove_fit': 'A (Відповідає)',
+      'groove_tight': 'B (Завузька)',
+      'groove_wide': 'C (Заширока)',
       'app_title': 'ROPE GUARD',
       'suite_name': 'ROPE GUARD',
       'hub_title': 'ОБЕРІТЬ ІНЖЕНЕРНИЙ МОДУЛЬ',
@@ -214,11 +232,29 @@ class Tr {
       'pdf_16625_sub': 'відповідно до вимог стандарту ISO 16625 (Вибір та перевірка канатів)',
     },
     AppLanguage.en: {
+      'wave_discard': 'Discard at',
+      'wave_work': 'Running section',
+      'wave_straight': 'Straight section',
+      'pdf_lay_spooling': 'Lay / Spooling',
+      'pdf_duty_class': 'Duty Class',
+      'pdf_group': 'Group',
+      'pdf_required': 'ISO 16625 Required',
+      'pdf_status': 'Status',
+      'pdf_pass': 'OK',
+      'pdf_fail': 'FAIL',
+      'unit_mm': 'mm',
+      'unit_kn': 'kN',
+      'unit_pcs': 'pcs.',
+      'limit_min': 'min.',
+      'limit_max': 'max.',
+      'groove_fit': 'A (Good fit)',
+      'groove_tight': 'B (Tight)',
+      'groove_wide': 'C (Wide)',
       'app_title': 'ROPE GUARD',
       'suite_name': 'ROPE GUARD',
       'hub_title': 'SELECT ENGINEERING MODULE',
       'hub_subtitle': 'Professional wire rope inspection, selection, and verification tools',
-      'mod1_title': 'MODULE 1: ISO 4309:2017',
+      'mod1_title': 'MODULE 1: ISO 4309',
       'mod1_desc': 'Wire rope inspection, broken wire limits, diameter reduction, waviness & discard criteria',
       'mod2_title': 'MODULE 2: ISO 16625',
       'mod2_desc': 'Rope selection, minimum safety coefficient Zp, drum and sheave diameters D/d calculation',
@@ -288,8 +324,8 @@ class Tr {
       'group_class': 'Classification Group (M1-M8 or A1-A8):',
       'duty_mode': 'Rope Application / Operating Mode:',
       'rot_type': 'Rope Rotation Type:',
-      'rot_std': 'Standard Rope',
-      'rot_rr': 'Rotation-resistant / Non-rotating',
+      'rot_std': 'Standard rope',
+      'rot_rr': 'Rotation resistant / Non-rotating rope',
       'swl_kn': 'Maximum Line Pull (SWL), kN:',
       'mbl_kn': 'Minimum Breaking Force (MBL), kN:',
       'strands_label': 'Number of Outer Strands (Factor t):',
@@ -446,7 +482,8 @@ class InspectionResult {
   final bool hasDeformations;
   final bool hasWaviness;
   final double? measuredGap;
-  final double? allowedGapLimit;
+  final double allowedGapLimit;
+  final WavinessZone wavinessZone;
   final SheaveGrooveStatus sheaveStatusP5;
   final SheaveGrooveStatus sheaveStatusP10;
   final RopeVerdict verdict;
@@ -463,7 +500,8 @@ class InspectionResult {
     required this.hasDeformations,
     required this.hasWaviness,
     this.measuredGap,
-    this.allowedGapLimit,
+    required this.allowedGapLimit,
+    required this.wavinessZone,
     required this.sheaveStatusP5,
     required this.sheaveStatusP10,
     required this.verdict,
@@ -604,18 +642,17 @@ class RopeInspectorEngine {
     }
     final double diameterSeverity = (diameterLossPercent / allowedDropLimit) * 100.0;
 
-    double? allowedGapLimit;
+    final double allowedGapLimit = wavinessZone == WavinessZone.sheaveOrDrum
+        ? nominalDiameter / 10.0
+        : nominalDiameter / 3.0;
     bool wavinessDiscard = false;
     if (hasWaviness && measuredGap != null) {
-      allowedGapLimit = wavinessZone == WavinessZone.sheaveOrDrum
-          ? nominalDiameter / 10.0
-          : nominalDiameter / 3.0;
 
       if (measuredGap >= allowedGapLimit) {
         wavinessDiscard = true;
         reasons.add(lang == AppLanguage.uk
-            ? 'Хвилястість: зазор g=${measuredGap.toStringAsFixed(2)} мм перевищує норму (${allowedGapLimit.toStringAsFixed(2)} мм)'
-            : 'Waviness: gap g=${measuredGap.toStringAsFixed(2)} mm exceeds discard limit (${allowedGapLimit.toStringAsFixed(2)} mm)');
+            ? 'Хвилястість: зазор g=${measuredGap.toStringAsFixed(2)} мм досягає або перевищує поріг бракування (${allowedGapLimit.toStringAsFixed(2)} мм)'
+            : 'Waviness: gap g=${measuredGap.toStringAsFixed(2)} mm reaches or exceeds discard limit (${allowedGapLimit.toStringAsFixed(2)} mm)');
       }
     }
 
@@ -681,6 +718,7 @@ class RopeInspectorEngine {
       hasWaviness: hasWaviness,
       measuredGap: measuredGap,
       allowedGapLimit: allowedGapLimit,
+      wavinessZone: wavinessZone,
       sheaveStatusP5: sheaveP5,
       sheaveStatusP10: sheaveP10,
       verdict: verdict,
@@ -1342,7 +1380,7 @@ class _MainHubScreenState extends State<MainHubScreen> {
                   title: tr('mod1_title'),
                   desc: tr('mod1_desc'),
                   icon: Icons.search,
-                  badge: 'ISO 4309:2017',
+                  badge: 'ISO 4309',
                   cardBg: cardBg,
                   textColor: textColor,
                   subtitleColor: subtitleColor,
@@ -1390,6 +1428,8 @@ class _MainHubScreenState extends State<MainHubScreen> {
     required Color borderCol,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final menuIconColor = isDark ? BrandColors.yellow : BrandColors.deepNavy;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -1412,10 +1452,10 @@ class _MainHubScreenState extends State<MainHubScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: BrandColors.deepNavy.withValues(alpha: 0.08),
+                color: menuIconColor.withValues(alpha: isDark ? 0.12 : 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, size: 34, color: BrandColors.deepNavy),
+              child: Icon(icon, size: 34, color: menuIconColor),
             ),
             const SizedBox(width: 18),
             Expanded(
@@ -1511,7 +1551,7 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
   List<RopeSpec> get _filteredRopes =>
       RopeDatabase.fullCatalog.where((r) => r.group == _currentGroup).toList();
 
-  void _calculate() {
+  bool _calculate() {
     final double? nomD = double.tryParse(_nominalDiamController.text.replaceAll(',', '.'));
     final double? actD = double.tryParse(_actualDiamController.text.replaceAll(',', '.'));
     final int? b6d = int.tryParse(_breaks6dController.text);
@@ -1520,11 +1560,11 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
         ? double.tryParse(_wavinessGapController.text.replaceAll(',', '.'))
         : null;
 
-    if (nomD == null || actD == null || b6d == null || b30d == null) {
+    if (nomD == null || nomD <= 0 || actD == null || b6d == null || b30d == null || (_hasWaviness && (waveGap == null || waveGap < 0))) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(tr('fill_all')), backgroundColor: BrandColors.graphiteAppBar),
       );
-      return;
+      return false;
     }
 
     setState(() {
@@ -1546,10 +1586,11 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
         lang: _lang,
       );
     });
+    return true;
   }
 
   void _printReport() {
-    if (_result == null) return;
+    if (!_calculate()) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PdfPreviewScreen(
@@ -1936,8 +1977,7 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                             value: _hasWaviness,
                             onChanged: (val) => setState(() => _hasWaviness = val),
                           ),
-                          if (_hasWaviness) ...[
-                            const SizedBox(height: 6),
+                          const SizedBox(height: 6),
                             SegmentedButton<WavinessZone>(
                               style: ButtonStyle(
                                 backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
@@ -1945,7 +1985,7 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                                   return cardBg;
                                 }),
                                 foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                                  if (states.contains(WidgetState.selected)) return BrandColors.yellow;
+                                  if (states.contains(WidgetState.selected)) return isDark ? BrandColors.yellow : BrandColors.deepNavy;
                                   return subtitleColor;
                                 }),
                               ),
@@ -1956,14 +1996,15 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                               selected: {_wavinessZone},
                               onSelectionChanged: (set) => setState(() => _wavinessZone = set.first),
                             ),
+                          if (_hasWaviness) ...[
                             const SizedBox(height: 10),
                             TextField(
                               controller: _wavinessGapController,
                               style: TextStyle(color: textColor),
                               keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                labelText: 'Зазор хвилі g (мм)',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: tr('gap_label'),
+                                border: const OutlineInputBorder(),
                                 filled: true,
                               ),
                             ),
@@ -2063,6 +2104,10 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
   }
 
   Widget _buildResultCard(InspectionResult res) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final resultTextColor = isDark ? Colors.white : BrandColors.lightTextMain;
+    final detailTextColor = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF263445);
+    final noteTextColor = isDark ? const Color(0xFFFFB4AB) : const Color(0xFF991B1B);
     Color cardColor = Colors.green.shade700;
     String title = tr('verdict_fit');
     IconData icon = Icons.check_circle;
@@ -2086,7 +2131,8 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
     }
 
     return Card(
-      color: cardColor.withValues(alpha: 0.18),
+      color: Color.alphaBlend(cardColor.withValues(alpha: isDark ? 0.18 : 0.12), isDark ? BrandColors.darkCardBg : Colors.white),
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(side: BorderSide(color: cardColor, width: 2), borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -2099,18 +2145,18 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                 Icon(icon, color: cardColor, size: 28),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                  child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: resultTextColor)),
                 ),
               ],
             ),
-            const Divider(height: 20, color: Colors.white24),
-            Text('• ${tr('param_loss')}: ${res.diameterLossPercent.toStringAsFixed(2)}% (Мін: ${res.minAllowedDiameter.toStringAsFixed(2)} mm)', style: const TextStyle(color: Colors.white70)),
-            Text('• ${tr('col_limit')} (6d / 30d): ${res.limitBreaks6d} / ${res.limitBreaks30d} pcs.', style: const TextStyle(color: Colors.white70)),
+            Divider(height: 20, color: resultTextColor.withValues(alpha: 0.2)),
+            Text('• ${tr('param_loss')}: ${res.diameterLossPercent.toStringAsFixed(2)}% (Мін: ${res.minAllowedDiameter.toStringAsFixed(2)} mm)', style: TextStyle(color: detailTextColor, fontSize: 14, height: 1.4)),
+            Text('• ${tr('col_limit')} (6d / 30d): ${res.limitBreaks6d} / ${res.limitBreaks30d} pcs.', style: TextStyle(color: detailTextColor, fontSize: 14, height: 1.4)),
             if (res.hasWaviness && res.measuredGap != null)
-              Text('• ${tr('param_wav')}: g=${res.measuredGap!.toStringAsFixed(2)} mm (Норма: max. ${res.allowedGapLimit?.toStringAsFixed(2)} mm)', style: const TextStyle(color: Colors.white70)),
+              Text('• ${tr('param_wav')}: g=${res.measuredGap!.toStringAsFixed(2)} mm (${tr('wave_discard')} g ≥ ${res.allowedGapLimit.toStringAsFixed(2)} ${tr('unit_mm')})', style: TextStyle(color: detailTextColor, fontSize: 14, height: 1.4)),
             if (res.reasons.isNotEmpty) ...[
               const SizedBox(height: 8),
-              ...res.reasons.map((r) => Text('— $r', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500))),
+              ...res.reasons.map((r) => Text('— $r', style: TextStyle(color: noteTextColor, fontWeight: FontWeight.w600, height: 1.4))),
             ],
           ],
         ),
@@ -2470,9 +2516,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                             return subtitleColor;
                           }),
                         ),
-                        segments: const [
-                          ButtonSegment(value: RopeRotationType.standard, label: Text('Стандартний канат', style: TextStyle(fontSize: 12))),
-                          ButtonSegment(value: RopeRotationType.rotationResistant, label: Text('Малокрутний / некрутильний канат', style: TextStyle(fontSize: 12))),
+                        segments: [
+                          ButtonSegment(value: RopeRotationType.standard, label: Text(tr('rot_std'), style: const TextStyle(fontSize: 12))),
+                          ButtonSegment(value: RopeRotationType.rotationResistant, label: Text(tr('rot_rr'), style: const TextStyle(fontSize: 12))),
                         ],
                         selected: {_rotType},
                         onSelectionChanged: (set) {
@@ -2603,12 +2649,17 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
   }
 
   Widget _buildIso16625ResultCard(Iso16625Result res) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final resultTextColor = isDark ? Colors.white : BrandColors.lightTextMain;
+    final detailTextColor = isDark ? const Color(0xFFE2E8F0) : const Color(0xFF263445);
+    final noteTextColor = isDark ? const Color(0xFFFFB4AB) : const Color(0xFF991B1B);
     final Color cardColor = res.isOverallPass ? Colors.green.shade700 : Colors.red.shade700;
     final String title = res.isOverallPass ? tr('status_ok') : tr('status_fail');
     final IconData icon = res.isOverallPass ? Icons.check_circle : Icons.cancel;
 
     return Card(
-      color: cardColor.withValues(alpha: 0.18),
+      color: Color.alphaBlend(cardColor.withValues(alpha: isDark ? 0.18 : 0.12), isDark ? BrandColors.darkCardBg : Colors.white),
+      surfaceTintColor: Colors.transparent,
       elevation: 0,
       shape: RoundedRectangleBorder(side: BorderSide(color: cardColor, width: 2), borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -2621,20 +2672,20 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                 Icon(icon, color: cardColor, size: 28),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                  child: Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: resultTextColor)),
                 ),
               ],
             ),
-            const Divider(height: 20, color: Colors.white24),
-            Text('• ${tr('calc_zp_min')}: ${res.zpMin.toStringAsFixed(2)}', style: const TextStyle(color: Colors.white70)),
-            Text('• ${tr('calc_z_fact')}: ${res.zActual.toStringAsFixed(2)}  ${res.isZpPass ? "✓" : "✗"}', style: const TextStyle(color: Colors.white70)),
+            Divider(height: 20, color: resultTextColor.withValues(alpha: 0.2)),
+            Text('• ${tr('calc_zp_min')}: ${res.zpMin.toStringAsFixed(2)}', style: TextStyle(color: detailTextColor, fontSize: 14, height: 1.4)),
+            Text('• ${tr('calc_z_fact')}: ${res.zActual.toStringAsFixed(2)}  ${res.isZpPass ? "✓" : "✗"}', style: TextStyle(color: detailTextColor, fontSize: 14, height: 1.4)),
             if (res.d1Min != null)
-              Text('• ${tr('calc_d1_min')}: ${res.d1Min!.toStringAsFixed(1)} мм  ${res.isD1Pass ? "✓" : "✗"}', style: const TextStyle(color: Colors.white70)),
+              Text('• ${tr('calc_d1_min')}: ${res.d1Min!.toStringAsFixed(1)} мм  ${res.isD1Pass ? "✓" : "✗"}', style: TextStyle(color: detailTextColor, fontSize: 14, height: 1.4)),
             if (res.d2Min != null)
-              Text('• ${tr('calc_d2_min')}: ${res.d2Min!.toStringAsFixed(1)} мм  ${res.isD2Pass ? "✓" : "✗"}', style: const TextStyle(color: Colors.white70)),
+              Text('• ${tr('calc_d2_min')}: ${res.d2Min!.toStringAsFixed(1)} мм  ${res.isD2Pass ? "✓" : "✗"}', style: TextStyle(color: detailTextColor, fontSize: 14, height: 1.4)),
             if (res.notes.isNotEmpty) ...[
               const SizedBox(height: 8),
-              ...res.notes.map((n) => Text('— $n', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w500))),
+              ...res.notes.map((n) => Text('— $n', style: TextStyle(color: noteTextColor, fontWeight: FontWeight.w600, height: 1.4))),
             ],
           ],
         ),
@@ -2943,9 +2994,17 @@ class PdfPreviewScreen extends StatelessWidget {
 
     final String dutyClassStr = mechClass == MechanismClass.m1ToM4 ? 'M1-M4' : 'M5-M8';
 
+    String grooveLabel(SheaveGrooveStatus status) {
+      switch (status) {
+        case SheaveGrooveStatus.fitA: return tr('groove_fit');
+        case SheaveGrooveStatus.tightB: return tr('groove_tight');
+        case SheaveGrooveStatus.wideC: return tr('groove_wide');
+        case SheaveGrooveStatus.none: return '-';
+      }
+    }
     final String sheaveSummary =
-        'P5: ${result.sheaveStatusP5.name.toUpperCase().replaceAll('FITA', 'A (Fit)').replaceAll('TIGHTB', 'B (Tight)').replaceAll('WIDEC', 'C (Wide)')} / '
-        'P10: ${result.sheaveStatusP10.name.toUpperCase().replaceAll('FITA', 'A (Fit)').replaceAll('TIGHTB', 'B (Tight)').replaceAll('WIDEC', 'C (Wide)').replaceAll('NONE', '-')}';
+        'P5: ${grooveLabel(result.sheaveStatusP5)} / '
+        'P10: ${grooveLabel(result.sheaveStatusP10)}';
 
     pdf.addPage(
       pw.Page(
@@ -3042,8 +3101,8 @@ class PdfPreviewScreen extends StatelessWidget {
                       _buildTableCell(tr('rope_construct'), isBold: true, isCenter: true),
                       _buildTableCell('RCN', isBold: true, isCenter: true),
                       _buildTableCell(tr('d_nom'), isBold: true, isCenter: true),
-                      _buildTableCell('Lay / Spooling', isBold: true, isCenter: true),
-                      _buildTableCell('Duty Class', isBold: true, isCenter: true),
+                      _buildTableCell(tr('pdf_lay_spooling'), isBold: true, isCenter: true),
+                      _buildTableCell(tr('pdf_duty_class'), isBold: true, isCenter: true),
                     ],
                   ),
                   pw.TableRow(
@@ -3080,41 +3139,41 @@ class PdfPreviewScreen extends StatelessWidget {
                   pw.TableRow(
                     children: [
                       _buildTableCell(tr('param_diam')),
-                      _buildTableCell('$actualDiameter mm', isBold: true, isCenter: true),
-                      _buildTableCell('min. ${result.minAllowedDiameter.toStringAsFixed(2)} mm', isCenter: true),
+                      _buildTableCell('$actualDiameter ${tr('unit_mm')}', isBold: true, isCenter: true),
+                      _buildTableCell('${tr('limit_min')} ${result.minAllowedDiameter.toStringAsFixed(2)} ${tr('unit_mm')}', isCenter: true),
                     ],
                   ),
                   pw.TableRow(
                     children: [
                       _buildTableCell(tr('param_loss')),
                       _buildTableCell('${result.diameterLossPercent.toStringAsFixed(1)}%', isBold: true, isCenter: true),
-                      _buildTableCell('max. ${result.allowedDiameterLossLimit.toStringAsFixed(1)}%', isCenter: true),
+                      _buildTableCell('${tr('limit_max')} ${result.allowedDiameterLossLimit.toStringAsFixed(1)}%', isCenter: true),
                     ],
                   ),
                   pw.TableRow(
                     children: [
                       _buildTableCell(tr('param_6d')),
-                      _buildTableCell('$breaks6d pcs.', isBold: true, isCenter: true),
-                      _buildTableCell('max. ${result.limitBreaks6d} pcs.', isCenter: true),
+                      _buildTableCell('$breaks6d ${tr('unit_pcs')}', isBold: true, isCenter: true),
+                      _buildTableCell('${tr('limit_max')} ${result.limitBreaks6d} ${tr('unit_pcs')}', isCenter: true),
                     ],
                   ),
                   pw.TableRow(
                     children: [
                       _buildTableCell(tr('param_30d')),
-                      _buildTableCell('$breaks30d pcs.', isBold: true, isCenter: true),
-                      _buildTableCell('max. ${result.limitBreaks30d} pcs.', isCenter: true),
+                      _buildTableCell('$breaks30d ${tr('unit_pcs')}', isBold: true, isCenter: true),
+                      _buildTableCell('${tr('limit_max')} ${result.limitBreaks30d} ${tr('unit_pcs')}', isCenter: true),
                     ],
                   ),
                   pw.TableRow(
                     children: [
                       _buildTableCell(tr('param_wav')),
                       _buildTableCell(
-                        result.hasWaviness && result.measuredGap != null ? 'g = ${result.measuredGap!.toStringAsFixed(2)} mm' : tr('no'),
+                        result.hasWaviness && result.measuredGap != null ? 'g = ${result.measuredGap!.toStringAsFixed(2)} ${tr('unit_mm')}' : tr('no'),
                         isBold: true,
                         isCenter: true,
                       ),
                       _buildTableCell(
-                        result.hasWaviness && result.allowedGapLimit != null ? 'max. ${result.allowedGapLimit!.toStringAsFixed(2)} mm' : tr('not_perm'),
+                        '${tr(result.wavinessZone == WavinessZone.sheaveOrDrum ? 'wave_work' : 'wave_straight')}\n${tr('wave_discard')} g ≥ ${result.wavinessZone == WavinessZone.sheaveOrDrum ? 'd/10' : 'd/3'} ≈ ${result.allowedGapLimit.toStringAsFixed(2)} ${tr('unit_mm')}',
                         isCenter: true,
                       ),
                     ],
@@ -3123,14 +3182,14 @@ class PdfPreviewScreen extends StatelessWidget {
                     children: [
                       _buildTableCell(tr('param_sheave')),
                       _buildTableCell(sheaveSummary, isBold: true, isCenter: true),
-                      _buildTableCell('A (Good fit)', isCenter: true),
+                      _buildTableCell(tr('groove_fit'), isCenter: true),
                     ],
                   ),
                   pw.TableRow(
                     children: [
                       _buildTableCell(tr('param_def')),
                       _buildTableCell(result.hasDeformations ? tr('yes') : tr('no'), isBold: true, isCenter: true),
-                      _buildTableCell('Not permitted', isCenter: true),
+                      _buildTableCell(tr('not_perm'), isCenter: true),
                     ],
                   ),
                 ],
@@ -3347,28 +3406,25 @@ class PdfIso16625PreviewScreen extends StatelessWidget {
                   2: const pw.FlexColumnWidth(1.5),
                   3: const pw.FlexColumnWidth(1.5),
                   4: const pw.FlexColumnWidth(1.5),
-                  5: const pw.FlexColumnWidth(1.5),
                 },
                 children: [
                   pw.TableRow(
                     decoration: pw.BoxDecoration(color: headerYellow),
                     children: [
-                      _buildTableCell('Group', isBold: true, isCenter: true),
+                      _buildTableCell(tr('pdf_group'), isBold: true, isCenter: true),
                       _buildTableCell(tr('duty_mode'), isBold: true, isCenter: true),
                       _buildTableCell(tr('d_nom'), isBold: true, isCenter: true),
-                      _buildTableCell('SWL (kN)', isBold: true, isCenter: true),
-                      _buildTableCell('MBL (kN)', isBold: true, isCenter: true),
-                      _buildTableCell('Factor t', isBold: true, isCenter: true),
+                      _buildTableCell("SWL (${tr('unit_kn')})", isBold: true, isCenter: true),
+                      _buildTableCell("MBL (${tr('unit_kn')})", isBold: true, isCenter: true),
                     ],
                   ),
                   pw.TableRow(
                     children: [
                       _buildTableCell(group, isCenter: true),
                       _buildTableCell(mode, isCenter: true),
-                      _buildTableCell('$dNom mm', isCenter: true),
-                      _buildTableCell('$swl kN', isCenter: true),
-                      _buildTableCell('$mbl kN', isCenter: true),
-                      _buildTableCell('${result.factorT}', isCenter: true),
+                      _buildTableCell('$dNom ${tr('unit_mm')}', isCenter: true),
+                      _buildTableCell('$swl ${tr('unit_kn')}', isCenter: true),
+                      _buildTableCell('$mbl ${tr('unit_kn')}', isCenter: true),
                     ],
                   ),
                 ],
@@ -3390,8 +3446,8 @@ class PdfIso16625PreviewScreen extends StatelessWidget {
                     children: [
                       _buildTableCell(tr('col_param'), isBold: true, isCenter: true),
                       _buildTableCell(tr('col_meas'), isBold: true, isCenter: true),
-                      _buildTableCell('ISO 16625 Required', isBold: true, isCenter: true),
-                      _buildTableCell('Status', isBold: true, isCenter: true),
+                      _buildTableCell(tr('pdf_required'), isBold: true, isCenter: true),
+                      _buildTableCell(tr('pdf_status'), isBold: true, isCenter: true),
                     ],
                   ),
                   pw.TableRow(
@@ -3399,25 +3455,25 @@ class PdfIso16625PreviewScreen extends StatelessWidget {
                       _buildTableCell(tr('calc_z_fact')),
                       _buildTableCell('Z = ${result.zActual.toStringAsFixed(2)}', isBold: true, isCenter: true),
                       _buildTableCell('Zp >= ${result.zpMin.toStringAsFixed(2)}', isCenter: true),
-                      _buildTableCell(result.isZpPass ? 'OK' : 'FAIL', isBold: true, isCenter: true),
+                      _buildTableCell(result.isZpPass ? tr('pdf_pass') : tr('pdf_fail'), isBold: true, isCenter: true),
                     ],
                   ),
                   if (result.d1Min != null)
                     pw.TableRow(
                       children: [
                         _buildTableCell(tr('drum_d1')),
-                        _buildTableCell('$actualD1 mm', isBold: true, isCenter: true),
-                        _buildTableCell('D1 >= ${result.d1Min!.toStringAsFixed(1)} mm', isCenter: true),
-                        _buildTableCell(result.isD1Pass ? 'OK' : 'FAIL', isBold: true, isCenter: true),
+                        _buildTableCell('$actualD1 ${tr('unit_mm')}', isBold: true, isCenter: true),
+                        _buildTableCell('D1 >= ${result.d1Min!.toStringAsFixed(1)} ${tr('unit_mm')}', isCenter: true),
+                        _buildTableCell(result.isD1Pass ? tr('pdf_pass') : tr('pdf_fail'), isBold: true, isCenter: true),
                       ],
                     ),
                   if (result.d2Min != null)
                     pw.TableRow(
                       children: [
                         _buildTableCell(tr('sheave_d2')),
-                        _buildTableCell('$actualD2 mm', isBold: true, isCenter: true),
-                        _buildTableCell('D2 >= ${result.d2Min!.toStringAsFixed(1)} mm', isCenter: true),
-                        _buildTableCell(result.isD2Pass ? 'OK' : 'FAIL', isBold: true, isCenter: true),
+                        _buildTableCell('$actualD2 ${tr('unit_mm')}', isBold: true, isCenter: true),
+                        _buildTableCell('D2 >= ${result.d2Min!.toStringAsFixed(1)} ${tr('unit_mm')}', isCenter: true),
+                        _buildTableCell(result.isD2Pass ? tr('pdf_pass') : tr('pdf_fail'), isBold: true, isCenter: true),
                       ],
                     ),
                 ],
