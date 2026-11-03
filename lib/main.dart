@@ -2010,10 +2010,7 @@ class _MainHubScreenState extends State<MainHubScreen> {
                     tooltip: 'UA / EN',
                     initialValue: _lang,
                     onSelected: (value) {
-                      final void Function(Set<AppLanguage>) changeLanguage = (
-                        set,
-                      ) => setState(() => _lang = set.first);
-                      changeLanguage({value});
+                      setState(() => _lang = value);
                     },
                     itemBuilder: (context) => const [
                       PopupMenuItem(
@@ -2041,15 +2038,17 @@ class _MainHubScreenState extends State<MainHubScreen> {
                       backgroundColor: WidgetStateProperty.resolveWith<Color>((
                         states,
                       ) {
-                        if (states.contains(WidgetState.selected))
+                        if (states.contains(WidgetState.selected)) {
                           return BrandColors.yellow;
+                        }
                         return Colors.transparent;
                       }),
                       foregroundColor: WidgetStateProperty.resolveWith<Color>((
                         states,
                       ) {
-                        if (states.contains(WidgetState.selected))
+                        if (states.contains(WidgetState.selected)) {
                           return BrandColors.graphiteAppBar;
+                        }
                         return Colors.white;
                       }),
                       side: WidgetStateProperty.all(
@@ -2365,7 +2364,9 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
   }
 
   void _printReport() {
-    if (!_calculate()) return;
+    if (!_calculate()) {
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PdfPreviewScreen(
@@ -2488,14 +2489,12 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                     tooltip: 'UA / EN',
                     initialValue: _lang,
                     onSelected: (value) {
-                      final void Function(Set<AppLanguage>) changeLanguage =
-                          (set) {
-                            setState(() {
-                              _lang = set.first;
-                              if (_result != null) _calculate();
-                            });
-                          };
-                      changeLanguage({value});
+                      setState(() {
+                        _lang = value;
+                        if (_result != null) {
+                          _calculate();
+                        }
+                      });
                     },
                     itemBuilder: (context) => const [
                       PopupMenuItem(
@@ -2523,15 +2522,17 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                       backgroundColor: WidgetStateProperty.resolveWith<Color>((
                         states,
                       ) {
-                        if (states.contains(WidgetState.selected))
+                        if (states.contains(WidgetState.selected)) {
                           return BrandColors.yellow;
+                        }
                         return Colors.transparent;
                       }),
                       foregroundColor: WidgetStateProperty.resolveWith<Color>((
                         states,
                       ) {
-                        if (states.contains(WidgetState.selected))
+                        if (states.contains(WidgetState.selected)) {
                           return BrandColors.graphiteAppBar;
+                        }
                         return Colors.white;
                       }),
                       side: WidgetStateProperty.all(
@@ -2559,7 +2560,9 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                     onSelectionChanged: (set) {
                       setState(() {
                         _lang = set.first;
-                        if (_result != null) _calculate();
+                        if (_result != null) {
+                          _calculate();
+                        }
                       });
                     },
                   ),
@@ -2700,18 +2703,20 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                         style: ButtonStyle(
                           backgroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return BrandColors.yellow.withValues(
                                     alpha: 0.3,
                                   );
+                                }
                                 return cardInner;
                               }),
                           foregroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return isDark
                                       ? BrandColors.yellow
                                       : BrandColors.deepNavy;
+                                }
                                 return textColor;
                               }),
                         ),
@@ -2743,7 +2748,9 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                           setState(() {
                             _currentGroup = set.first;
                             _selectedRope = _filteredRopes.first;
-                            if (_result != null) _calculate();
+                            if (_result != null) {
+                              _calculate();
+                            }
                           });
                         },
                       ),
@@ -2783,7 +2790,9 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                             if (val != null) {
                               setState(() {
                                 _selectedRope = val;
-                                if (_result != null) _calculate();
+                                if (_result != null) {
+                                  _calculate();
+                                }
                               });
                             }
                           },
@@ -2882,18 +2891,20 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                         style: ButtonStyle(
                           backgroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return BrandColors.yellow.withValues(
                                     alpha: 0.3,
                                   );
+                                }
                                 return cardInner;
                               }),
                           foregroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return isDark
                                       ? BrandColors.yellow
                                       : BrandColors.deepNavy;
+                                }
                                 return textColor;
                               }),
                         ),
@@ -2919,18 +2930,20 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                         style: ButtonStyle(
                           backgroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return BrandColors.yellow.withValues(
                                     alpha: 0.3,
                                   );
+                                }
                                 return cardInner;
                               }),
                           foregroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return isDark
                                       ? BrandColors.yellow
                                       : BrandColors.deepNavy;
+                                }
                                 return textColor;
                               }),
                         ),
@@ -2956,18 +2969,20 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                         style: ButtonStyle(
                           backgroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return BrandColors.yellow.withValues(
                                     alpha: 0.3,
                                   );
+                                }
                                 return cardInner;
                               }),
                           foregroundColor:
                               WidgetStateProperty.resolveWith<Color>((states) {
-                                if (states.contains(WidgetState.selected))
+                                if (states.contains(WidgetState.selected)) {
                                   return isDark
                                       ? BrandColors.yellow
                                       : BrandColors.deepNavy;
+                                }
                                 return textColor;
                               }),
                         ),
@@ -3064,20 +3079,26 @@ class _Iso4309ModuleScreenState extends State<Iso4309ModuleScreen> {
                                     WidgetStateProperty.resolveWith<Color>((
                                       states,
                                     ) {
-                                      if (states.contains(WidgetState.selected))
+                                      if (states.contains(
+                                        WidgetState.selected,
+                                      )) {
                                         return BrandColors.yellow.withValues(
                                           alpha: 0.3,
                                         );
+                                      }
                                       return cardBg;
                                     }),
                                 foregroundColor:
                                     WidgetStateProperty.resolveWith<Color>((
                                       states,
                                     ) {
-                                      if (states.contains(WidgetState.selected))
+                                      if (states.contains(
+                                        WidgetState.selected,
+                                      )) {
                                         return isDark
                                             ? BrandColors.yellow
                                             : BrandColors.deepNavy;
+                                      }
                                       return subtitleColor;
                                     }),
                               ),
@@ -3585,7 +3606,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
   }
 
   void _printReport() {
-    if (_result == null) return;
+    if (_result == null) {
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PdfIso16625PreviewScreen(
@@ -3657,14 +3680,12 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                     tooltip: 'UA / EN',
                     initialValue: _lang,
                     onSelected: (value) {
-                      final void Function(Set<AppLanguage>) changeLanguage =
-                          (set) {
-                            setState(() {
-                              _lang = set.first;
-                              if (_result != null) _calculate();
-                            });
-                          };
-                      changeLanguage({value});
+                      setState(() {
+                        _lang = value;
+                        if (_result != null) {
+                          _calculate();
+                        }
+                      });
                     },
                     itemBuilder: (context) => const [
                       PopupMenuItem(
@@ -3692,15 +3713,17 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                       backgroundColor: WidgetStateProperty.resolveWith<Color>((
                         states,
                       ) {
-                        if (states.contains(WidgetState.selected))
+                        if (states.contains(WidgetState.selected)) {
                           return BrandColors.yellow;
+                        }
                         return Colors.transparent;
                       }),
                       foregroundColor: WidgetStateProperty.resolveWith<Color>((
                         states,
                       ) {
-                        if (states.contains(WidgetState.selected))
+                        if (states.contains(WidgetState.selected)) {
                           return BrandColors.graphiteAppBar;
+                        }
                         return Colors.white;
                       }),
                       side: WidgetStateProperty.all(
@@ -3728,7 +3751,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                     onSelectionChanged: (set) {
                       setState(() {
                         _lang = set.first;
-                        if (_result != null) _calculate();
+                        if (_result != null) {
+                          _calculate();
+                        }
                       });
                     },
                   ),
@@ -3879,7 +3904,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                             setState(() {
                               _category = val;
                               _updateModesAndGroups();
-                              if (_result != null) _calculate();
+                              if (_result != null) {
+                                _calculate();
+                              }
                             });
                           }
                         },
@@ -3930,7 +3957,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                                   if (val != null) {
                                     setState(() {
                                       _selectedGroup = val;
-                                      if (_result != null) _calculate();
+                                      if (_result != null) {
+                                        _calculate();
+                                      }
                                     });
                                   }
                                 },
@@ -3981,7 +4010,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                                   if (val != null) {
                                     setState(() {
                                       _selectedMode = val;
-                                      if (_result != null) _calculate();
+                                      if (_result != null) {
+                                        _calculate();
+                                      }
                                     });
                                   }
                                 },
@@ -4011,20 +4042,22 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                                 WidgetStateProperty.resolveWith<Color>((
                                   states,
                                 ) {
-                                  if (states.contains(WidgetState.selected))
+                                  if (states.contains(WidgetState.selected)) {
                                     return BrandColors.yellow.withValues(
                                       alpha: 0.3,
                                     );
+                                  }
                                   return cardInner;
                                 }),
                             foregroundColor:
                                 WidgetStateProperty.resolveWith<Color>((
                                   states,
                                 ) {
-                                  if (states.contains(WidgetState.selected))
+                                  if (states.contains(WidgetState.selected)) {
                                     return isDark
                                         ? BrandColors.yellow
                                         : BrandColors.deepNavy;
+                                  }
                                   return subtitleColor;
                                 }),
                           ),
@@ -4048,7 +4081,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                           onSelectionChanged: (set) {
                             setState(() {
                               _rotType = set.first;
-                              if (_result != null) _calculate();
+                              if (_result != null) {
+                                _calculate();
+                              }
                             });
                           },
                         ),
@@ -4127,7 +4162,9 @@ class _Iso16625ModuleScreenState extends State<Iso16625ModuleScreen> {
                             if (val != null) {
                               setState(() {
                                 _strandOption = val;
-                                if (_result != null) _calculate();
+                                if (_result != null) {
+                                  _calculate();
+                                }
                               });
                             }
                           },
